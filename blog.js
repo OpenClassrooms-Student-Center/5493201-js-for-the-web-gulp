@@ -6,7 +6,10 @@ function getRequest(url) {
     let request = new XMLHttpRequest();
     request.open('GET', url);
     request.onreadystatechange = () => {
-      if (request.readyState === 4 && request.status === 200) {
+      if (request.readyState === 4) {
+        if (request.status !== 200) {
+          reject(JSON.parse(request.response));
+        }
         resolve(JSON.parse(request.response));
       }
     };
@@ -17,8 +20,12 @@ function getRequest(url) {
 async function getBlogPost() {
   const titlePromise = getRequest(api + '/generate-title');
   const loremPromise = getRequest(api + '/generate-lorem');
-  let [titleResponse, loremResponse] = await Promise.all([titlePromise, loremPromise]);
-  document.querySelector('main').appendChild(buildPostElement(titleResponse.title, loremResponse.lorem));
+  try {
+    let [titleResponse, loremResponse] = await Promise.all([titlePromise, loremPromise]);
+    document.querySelector('main').appendChild(buildPostElement(titleResponse.title, loremResponse.lorem));
+  } catch (error) {
+    document.querySelector('main').appendChild(buildPostElement('An error occurred!', error));
+  }
 }
 
 loadButton.addEventListener('click', async function () {
